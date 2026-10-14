@@ -48,7 +48,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File launcher\ChatGPT-boot.ps1 -M
 powershell -NoProfile -ExecutionPolicy Bypass -File launcher\ChatGPT-boot.ps1 -Mode off
 ```
 
-也可以用 `launcher\ChatGPT.cmd` 双击运行。创建带 ChatGPT 图标的桌面快捷方式的方法见 `docs/使用说明.md`。
+也可以用 `launcher\ChatGPT.cmd` 双击运行。
+
+> 下载后想要桌面带 ChatGPT 图标的快捷方式？运行一次下面这行即可自动创建：
+> ```powershell
+> powershell -NoProfile -ExecutionPolicy Bypass -File tools\Create-ChatGPTShortcut.ps1
+> ```
+> 详见 `docs/使用说明.md`。
 
 ### 参数
 
