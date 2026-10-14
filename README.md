@@ -8,7 +8,6 @@
 ## 动画预览
 
 ![preview](examples/preview.png)
-*占位：提交前请放入一张实际运行截图或 demo GIF。*
 
 ## 工作原理
 
