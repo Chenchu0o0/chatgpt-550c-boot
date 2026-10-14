@@ -7,6 +7,17 @@ param(
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Windows.Forms
 
+function Get-CodexAumid {
+  # AppUserModelID of the packaged ChatGPT desktop (OpenAI.Codex).
+  $pkg = Get-AppxPackage -Name "OpenAI.Codex" -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($pkg) { return ($pkg.Name + "_" + $pkg.PublisherId + "!App") }
+  $sa = Get-StartApps -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -eq "ChatGPT" -and $_.AppID -like "OpenAI.Codex_*!App" } |
+        Select-Object -First 1
+  if ($sa) { return $sa.AppID }
+  return $null
+}
+
 function Resolve-Codex {
   # UWP/Store app (this machine ships Codex inside the ChatGPT desktop app):
   # no .exe alias exists, so resolve via InstallLocation first, then WindowsApps aliases.
@@ -27,20 +38,20 @@ function Resolve-Codex {
 
 function Launch-Codex {
   param([string]$Path)
-  # If we resolved a real exe, Start-Process it.
+  # Prefer launching by AppUserModelID via shell:AppsFolder: the packaged app
+  # keeps its correct taskbar icon and grouping. Launching the raw WindowsApps
+  # exe directly makes Windows show a blank taskbar icon.
+  $aumid = Get-CodexAumid
+  if ($aumid) {
+    try {
+      Start-Process -FilePath "explorer.exe" -ArgumentList ("shell:AppsFolder\" + $aumid) | Out-Null
+      return $true
+    } catch { }
+  }
+  # Fallback: if we resolved a real exe, Start-Process it.
   if ($Path -and (Test-Path -LiteralPath $Path)) {
     Start-Process -FilePath $Path | Out-Null
     return $true
-  }
-  # Otherwise launch the Store app by its AppID (ChatGPT desktop = Codex).
-  $pkg = Get-AppxPackage -Name "OpenAI.Codex" -ErrorAction SilentlyContinue | Select-Object -First 1
-  if ($pkg) {
-    $id = ($pkg.Name + "_" + $pkg.PublisherId + "!App")
-    try {
-      # shell:AppsFolder explorer launch works for packaged apps
-      Start-Process -FilePath "explorer.exe" -ArgumentList ("shell:AppsFolder\" + $id) | Out-Null
-      return $true
-    } catch { }
   }
   return $false
 }
