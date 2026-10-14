@@ -1,7 +1,17 @@
 # 版权声明与来源 / Notices
 
 本文件记录本项目**非原创部分**的来源与版权归属，并保留原作者要求的版权声明。
-本文件构成本项目许可条款的一部分，请与 [LICENSE](LICENSE) 一并阅读。
+
+## 许可结构
+
+| 范围 | 适用条款 |
+| --- | --- |
+| 本项目自行编写的部分（`launcher/`、`tools/`、文档） | [MIT License](LICENSE) |
+| `550c-overlay.html`（派生作品） | 同时受本仓库 MIT 与上游 MIT 约束，声明见下 |
+| `icons/`、`550C` 美术设定 | 不在 MIT 范围内，见 [TRADEMARKS.md](TRADEMARKS.md) |
+
+`LICENSE` 文件保持 MIT 标准全文以维持许可识别的准确性；上游版权声明由本文件承载，
+本文件与 `LICENSE` 共同构成本项目的许可条款。
 
 ---
 
