@@ -17,7 +17,7 @@
         │
         ▼
 launcher/ChatGPT-boot.ps1
-        │  用 Chrome/Edge --kiosk 全屏打开 assets/550c-overlay.html
+        │  用 Chrome/Edge --kiosk 全屏打开 550c-overlay.html
         ▼
    播放 550C 开机动画（完整模式约 90 秒，可 Esc/点击跳过）
         │  动画播完（页面标题变为 __550C_DONE__）
@@ -25,7 +25,7 @@ launcher/ChatGPT-boot.ps1
   关闭覆盖层 → 通过 AppX 定位并启动 ChatGPT（OpenAI.Codex 商店版）
 ```
 
-- 动画是单个自包含 HTML（`assets/550c-overlay.html`），不依赖网络、外链资源。
+- 动画是单个自包含 HTML（`550c-overlay.html`），不依赖网络、外链资源。
 - 启动器通过 `Get-AppxPackage -Name "OpenAI.Codex"` 定位商店应用，找不到时回退到 `shell:AppsFolder` AUMID。
 
 ## 特性
@@ -68,7 +68,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File launcher\ChatGPT-boot.ps1 -M
 
 ```
 chatgpt-550c-boot/
-├── assets/550c-overlay.html   # 动画本体（自包含 HTML）
+├── 550c-overlay.html   # 动画本体（自包含 HTML）
 ├── launcher/                  # 启动器（PowerShell + cmd 入口）
 ├── icons/                     # ChatGPT 官方图标（快捷方式用）
 ├── docs/使用说明.md            # 中文使用文档

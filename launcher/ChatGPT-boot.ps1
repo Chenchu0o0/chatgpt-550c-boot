@@ -72,7 +72,7 @@ if ($Mode -eq "off") {
 }
 
 # ---- open overlay in a clean fullscreen browser window ----
-$overlay = Join-Path $PSScriptRoot '..\assets\550c-overlay.html'
+$overlay = Join-Path $PSScriptRoot '..\550c-overlay.html'
 if (-not (Test-Path -LiteralPath $overlay)) {
   [System.Windows.Forms.MessageBox]::Show("Missing 550c-overlay.html.","ChatGPT Boot") | Out-Null
   try { [void](Launch-Codex -Path $exe) } catch { }
