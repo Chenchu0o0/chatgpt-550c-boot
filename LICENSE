@@ -19,3 +19,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+This project is not entirely original work. `550c-overlay.html` is a derivative
+of dsh-550c-boot (Copyright (c) 2026 Ziyang Song, MIT), whose animation was in
+turn ported from an original by Voidpoket. The required copyright notices and
+full provenance are recorded in NOTICE.md, which forms part of this project's
+licensing terms.

@@ -11,11 +11,22 @@
 - 如需分发本项目，请自行替换为可授权的图标素材，或直接删除 `icons/` 目录
   （此时脚本会回退到系统图标 `shell32.dll`）。
 
-## 动画中的设定与素材
+## `550c-overlay.html` 的来源（重要）
 
-- 开机动画的思路与素材参考自 [dsh-550c-boot](https://github.com/yannicksong0106/dsh-550c-boot)。
-- 「550C」设定出自电影《流浪地球2》（The Wandering Earth II），相关名称与设定的
-  权利归其权利人所有。
+该文件**不是原创作品**，而是派生作品，因此除本文件外另有专门的来源与版权声明：
+**见 [NOTICE.md](NOTICE.md)**。简要说明：
+
+- 动画原稿作者为 **Voidpoket**（https://github.com/Voidpoket）。
+- 直接来源为 [dsh-550c-boot](https://github.com/yannicksong0106/dsh-550c-boot)，
+  `Copyright (c) 2026 Ziyang Song`，MIT 许可。
+- 本项目仅作少量调整（跳过按钮、触屏合成点击抑制等）。
+
+## 「550C」设定
+
+「550C」设定出自电影《流浪地球2》（The Wandering Earth II）。
+该美术设定与名称的相关权利**不属于本项目，也不属于上述任何一位代码作者**。
+本项目对 550C 界面的呈现属致敬性质的演绎，不主张任何相关权利；
+若权利人认为使用方式不当，请提出 issue，我们会配合调整或移除。
 
 ## 「ChatGPT / Codex」名称
 

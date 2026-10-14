@@ -129,6 +129,7 @@ chatgpt-550c-boot/
 ├── docs/使用说明.md                  # 中文使用文档
 ├── examples/preview.png             # 动画预览图
 ├── LICENSE                          # MIT
+├── NOTICE.md                        # 来源与版权声明（动画为派生作品）
 └── TRADEMARKS.md                    # 商标与第三方素材说明
 ```
 
@@ -162,10 +163,19 @@ chatgpt-550c-boot/
 | 动画不播放，直接打开了 ChatGPT | 可能使用了 `-Mode off`，或未检测到浏览器。 |
 | 任务栏出现空白图标 | 说明 AUMID 启动失败并回退到了可执行文件路径，可检查 `Get-StartApps` 是否包含 ChatGPT。 |
 
-## 致谢
+## 来源与致谢
 
-- 动画思路与素材参考 [dsh-550c-boot](https://github.com/yannicksong0106/dsh-550c-boot)
-- 「550C」设定出自电影《流浪地球2》（The Wandering Earth II）
+> ⚠️ **`550c-overlay.html` 不是本项目的原创作品。** 它是派生作品，
+> 完整来源与版权声明见 [NOTICE.md](NOTICE.md)。
+
+| 部分 | 作者 | 说明 |
+| --- | --- | --- |
+| 动画原稿 | [Voidpoket](https://github.com/Voidpoket) | 550C 片头页面原稿，动画的实际创作者。配色、面板布局、时间线节奏均出自此稿 |
+| 移植与定点改写 | [dsh-550c-boot](https://github.com/yannicksong0106/dsh-550c-boot) · Ziyang Song | `Copyright (c) 2026 Ziyang Song`，MIT 许可。其 `assets/550C-source.html` 即本动画的直接来源 |
+| 本仓库调整 | 本项目 | 跳过按钮、触屏合成点击抑制等少量修改 |
+
+「550C」设定出自电影《流浪地球2》（The Wandering Earth II）。该美术设定的相关权利
+不属于本项目，也不属于上述任何一位代码作者。
 
 ## 免责声明
 
@@ -176,4 +186,8 @@ chatgpt-550c-boot/
 
 ## 许可
 
-代码以 [MIT License](LICENSE) 授权。第三方素材与商标说明见 [TRADEMARKS.md](TRADEMARKS.md)。
+本项目**自行编写**的部分（`launcher/`、`tools/`、文档）以 [MIT License](LICENSE) 授权。
+
+`550c-overlay.html` 为派生作品，同时受上游 MIT 许可约束，版权声明与来源见 [NOTICE.md](NOTICE.md)。
+`icons/` 与「550C」美术设定的说明见 [TRADEMARKS.md](TRADEMARKS.md)。
+
