@@ -1,16 +1,26 @@
 ﻿# ChatGPT Boot Overlay Launcher (ASCII only, UTF-8 BOM)
 param(
   [ValidateSet("simple","full","off")][string]$Mode = "full",
-  [string]$DelaySec = "1"
+  [ValidateRange(0,60)][double]$DelaySec = 1
 )
 
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Windows.Forms
 
+# Temp browser-profile name prefix. Also used to sweep leftovers from runs that
+# were killed before the end of this script could clean up after itself.
+$script:ProfilePrefix = "chatgpt-boot-"
+$script:StaleAfterHours = 1
+
 function Get-CodexAumid {
-  # AppUserModelID of the packaged ChatGPT desktop (OpenAI.Codex).
+  # AppUserModelID of the packaged ChatGPT desktop app. The store package is
+  # named OpenAI.Codex but its display name is "ChatGPT"; AUMID is always
+  # <PackageFamilyName>!<AppId>, and for this package the AppId is "App".
   $pkg = Get-AppxPackage -Name "OpenAI.Codex" -ErrorAction SilentlyContinue | Select-Object -First 1
-  if ($pkg) { return ($pkg.Name + "_" + $pkg.PublisherId + "!App") }
+  if ($pkg) {
+    $family = if ($pkg.PackageFamilyName) { $pkg.PackageFamilyName } else { $pkg.Name + "_" + $pkg.PublisherId }
+    return ($family + "!App")
+  }
   $sa = Get-StartApps -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -eq "ChatGPT" -and $_.AppID -like "OpenAI.Codex_*!App" } |
         Select-Object -First 1
@@ -37,6 +47,7 @@ function Resolve-Codex {
 }
 
 function Launch-Codex {
+  # -Path is optional: AUMID launching is preferred and needs no exe path.
   param([string]$Path)
   # Prefer launching by AppUserModelID via shell:AppsFolder: the packaged app
   # keeps its correct taskbar icon and grouping. Launching the raw WindowsApps
@@ -56,6 +67,30 @@ function Launch-Codex {
   return $false
 }
 
+function Remove-BootProfile {
+  # Deleting the browser profile right after Stop-Process usually fails because
+  # the browser still holds handles, so retry with a short backoff instead of
+  # silently leaking tens of MB into %TEMP% on every run.
+  param([string]$Path)
+  if (-not $Path -or -not (Test-Path -LiteralPath $Path)) { return }
+  for ($i = 0; $i -lt 5; $i++) {
+    if (-not (Test-Path -LiteralPath $Path)) { return }
+    try { Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction Stop } catch { }
+    if (-not (Test-Path -LiteralPath $Path)) { return }
+    Start-Sleep -Milliseconds 300
+  }
+}
+
+function Clear-StaleBootProfiles {
+  # Safety net: clean up profiles left behind by earlier runs that never reached
+  # their own cleanup step (killed PowerShell, crashed overlay, reboot).
+  # Only touches entries matching our prefix and older than $StaleAfterHours.
+  $cutoff = (Get-Date).AddHours(-$script:StaleAfterHours)
+  Get-ChildItem -LiteralPath $env:TEMP -Directory -Filter ($script:ProfilePrefix + '*') -ErrorAction SilentlyContinue |
+    Where-Object { $_.LastWriteTime -lt $cutoff } |
+    ForEach-Object { Remove-BootProfile -Path $_.FullName }
+}
+
 function Launch-Overlay {
   param([string]$Url, [string]$Profile)
   $chrome = @(
@@ -65,22 +100,37 @@ function Launch-Overlay {
     'C:\Program Files\Microsoft\Edge\Application\msedge.exe'
   ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
   if (-not $chrome) { return $null }
-  $browserArgs = @('--new-window','--kiosk','--start-maximized','--no-first-run','--no-default-browser-check',('--user-data-dir=' + $Profile),$Url)
+  # Quote the profile path and the URL so spaces (e.g. in a user profile name)
+  # cannot split a single argument into several.
+  $browserArgs = @(
+    '--new-window','--kiosk','--start-maximized','--no-first-run','--no-default-browser-check',
+    ('--user-data-dir="' + $Profile + '"'),
+    ('"' + $Url + '"')
+  )
   return Start-Process -FilePath $chrome -ArgumentList $browserArgs -PassThru
 }
 
-# ---- resolve target once ----
-$exe = Resolve-Codex
+# ---- sweep leftovers from earlier interrupted runs ----
+Clear-StaleBootProfiles
 
 # ---- Mode "off": no animation, just launch ChatGPT ----
+# Resolve the exe fallback only on this path, so a broken AppX query cannot
+# prevent the animation modes from running.
 if ($Mode -eq "off") {
+  $exe = $null
+  try { $exe = Resolve-Codex } catch { }
   $launched = $false
   try { $launched = Launch-Codex -Path $exe } catch { }
   if (-not $launched) {
     [System.Windows.Forms.MessageBox]::Show("ChatGPT (OpenAI.Codex) not found.","ChatGPT Boot") | Out-Null
+    exit 1
   }
   exit 0
 }
+
+# ---- resolve the exe fallback (used only when AUMID launching fails) ----
+$exe = $null
+try { $exe = Resolve-Codex } catch { }
 
 # ---- open overlay in a clean fullscreen browser window ----
 $overlay = Join-Path $PSScriptRoot '..\550c-overlay.html'
@@ -89,7 +139,6 @@ if (-not (Test-Path -LiteralPath $overlay)) {
   try { [void](Launch-Codex -Path $exe) } catch { }
   exit 1
 }
-
 $url = ([System.Uri]$overlay).AbsoluteUri + '?mode=' + [uri]::EscapeDataString($Mode)
 $profile = Join-Path $env:TEMP ('chatgpt-boot-' + [guid]::NewGuid().ToString('N'))
 $p = Launch-Overlay -Url $url -Profile $profile
@@ -119,13 +168,23 @@ while ((Get-Date) -lt $deadline) {
   } catch { }
 }
 
-# Animation finished (done, skipped via Esc/click, or browser closed).
+# Animation finished (done, skipped via Esc/SKIP, or browser closed).
 # Close the overlay first, then bring up ChatGPT so it appears only after the animation ends.
-if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
-Start-Sleep -Seconds ([double]$DelaySec)
-try { $codexLaunched = Launch-Codex -Path $exe } catch { $codexLaunched = $false }
-if (-not $codexLaunched) {
-  [System.Windows.Forms.MessageBox]::Show("ChatGPT (OpenAI.Codex) not found.","ChatGPT Boot") | Out-Null
+$codexLaunched = $false
+try {
+  if (-not $p.HasExited) {
+    Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+    # Give the browser a moment to release file handles before deleting its profile.
+    try { Wait-Process -Id $p.Id -Timeout 5 -ErrorAction SilentlyContinue } catch { }
+  }
+  Start-Sleep -Seconds $DelaySec
+  try { $codexLaunched = Launch-Codex -Path $exe } catch { $codexLaunched = $false }
+  if (-not $codexLaunched) {
+    [System.Windows.Forms.MessageBox]::Show("ChatGPT (OpenAI.Codex) not found.","ChatGPT Boot") | Out-Null
+  }
+} finally {
+  # Runs even if the browser closed on its own or the block above threw.
+  Remove-BootProfile -Path $profile
 }
 
-Remove-Item -LiteralPath $profile -Recurse -Force -ErrorAction SilentlyContinue
+if ($codexLaunched) { exit 0 } else { exit 1 }

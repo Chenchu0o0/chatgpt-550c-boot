@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>550C // UAV-BS-07 OVERRIDE</title>
 <style>
@@ -145,9 +146,10 @@
   #final.show::after{animation:edgeRight .48s cubic-bezier(.7,0,.2,1) forwards;}
   @keyframes edgeLeft{0%{left:50%;opacity:1;}90%{left:0;opacity:1;}100%{left:0;opacity:0;}}
   @keyframes edgeRight{0%{right:50%;opacity:1;}90%{right:0;opacity:1;}100%{right:0;opacity:0;}}
-  #hint{position:fixed;left:0;right:0;bottom:8px;z-index:700;text-align:center;font-size:10px;letter-spacing:.25em;color:var(--text-faint);opacity:0;transition:opacity .6s;pointer-events:none;text-transform:uppercase;}
-  #hint.show{opacity:.7;}
-  #hint{display:none!important}
+  /* 覆盖层专用的跳过按钮：只让这里（和 Esc）能结束动画，
+     避免点一下日志区或弹窗就把整段动画跳过。 */
+  #skipBtn{position:fixed;top:12px;right:14px;z-index:900;padding:6px 16px;background:rgba(10,8,5,.85);border:1px solid var(--amber-d);color:var(--amber);font-size:10px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;user-select:none;opacity:.5;transition:opacity .3s,background .2s,border-color .2s,color .2s;}
+  #skipBtn:hover{opacity:1;background:rgba(232,160,32,.18);border-color:var(--amber);color:var(--amber-b);box-shadow:0 0 16px rgba(232,160,32,.3);}
 </style>
 </head>
 <body>
@@ -250,7 +252,7 @@
 
 <div id="dim"></div>
 <div id="final">SYSTEM IS REWRITTEN</div>
-<div id="hint">— REFRESH TO REPLAY —</div>
+<div id="skipBtn">SKIP ▸</div>
 
 <script>
 (() => {
@@ -322,22 +324,50 @@ async function bootUp(){
   }
 }
 
+/* 结束动画的唯一入口：Esc、SKIP 按钮，或动画自然播完。
+   注意这里不再监听整个页面的 click —— 否则点日志区或弹窗就会跳过整段动画。 */
+let finished = false;
+function finish(){
+  if (finished) return;
+  finished = true;
+  document.title = "__550C_DONE__";
+  setTimeout(() => { try { window.close(); } catch (err) {} }, 150);
+}
+
 window.addEventListener("keydown", e => {
   if (e.code === "Space" || e.key === " "){ e.preventDefault(); bootUp(); }
 });
 
 window.addEventListener("keydown", e => {
-  if (e.key === "Escape"){ document.title = "__550C_DONE__"; setTimeout(() => { try { window.close(); } catch (err) {} }, 150); }
+  if (e.key === "Escape") finish();
 });
 
 /* 自动开机：加载完成即启动，无需按键（预览窗口 / 触屏同样生效） */
 if (document.readyState === "complete") setTimeout(bootUp, 250);
 else window.addEventListener("load", () => setTimeout(bootUp, 250));
-document.addEventListener("click", () => {
-  if (booting) { document.title = "__550C_DONE__"; setTimeout(() => { try { window.close(); } catch (err) {} }, 150); }
-  else bootUp();
+
+/* 触屏上浏览器会在 touchstart 之后补发 click。
+   记下时间戳，让紧随其后的 click 只开机、不会被当成"跳过"。
+   另外只在 bootUp 未启动时才因点击开机，避免点一下就把动画掐掉。 */
+let lastTouch = 0;
+const skipBtn = document.getElementById("skipBtn");
+function armSkip(){
+  if (!skipBtn || skipBtn.dataset.armed) return;
+  skipBtn.dataset.armed = "1";
+  skipBtn.addEventListener("click", e => { e.stopPropagation(); finish(); });
+  skipBtn.addEventListener("touchstart", e => { e.stopPropagation(); }, { passive: true });
+}
+if (skipBtn) armSkip();
+document.addEventListener("click", e => {
+  if (Date.now() - lastTouch < 700) return;          // 来自触屏的合成 click
+  if (e.target === skipBtn || (skipBtn && skipBtn.contains(e.target))) return;
+  if (booting) return;                                // 动画进行中不再点击跳过
+  bootUp();                                           // 仅用于手动预览时开机
 });
-document.addEventListener("touchstart", bootUp, { passive: true });
+document.addEventListener("touchstart", e => {
+  lastTouch = Date.now();
+  if (!booting) bootUp();
+}, { passive: true });
 
 /* ===== 主终端日志 ===== */
 function mainLine(text, cls = ""){
@@ -459,7 +489,7 @@ function buildNodes(){
   nodeGrid.innerHTML = ""; nodeIcons.length = 0;
   for (let i = 0; i < NODE_COUNT; i++){
     const d = document.createElement("div"); d.className = "uav";
-    const svgWrap = document.createElement("div"); svgWrap.innerHTML = UAV_SVG; svgWrap.style.color = "#e05030";
+    const svgWrap = document.createElement("div"); svgWrap.innerHTML = UAV_SVG; svgWrap.style.color = "var(--red)";
     const id = document.createElement("div"); id.className = "id"; id.textContent = "U" + String(i+1).padStart(2,"0");
     const st = document.createElement("div"); st.className = "st"; st.textContent = "LOST";
     d.appendChild(svgWrap); d.appendChild(id); d.appendChild(st); nodeGrid.appendChild(d);
@@ -780,7 +810,6 @@ async function phaseFinish(){
   await sleep(200);
   $("#final").classList.add("show");
   await sleep(900);
-  $("#hint").classList.add("show");
 }
 
 async function run(){
