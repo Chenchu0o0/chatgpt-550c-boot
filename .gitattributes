@@ -1,0 +1,6 @@
+# .bat/.cmd 以二进制保存，确保仓库内就是 CRLF，
+# 这样从 GitHub 下载的 zip 也是 CRLF，双击即可运行（cmd 对 LF 的 bat 会解析出错）
+*.bat   -text
+*.cmd   -text
+# PowerShell 兼容 CRLF/LF，按常规文本处理
+*.ps1   text eol=crlf
